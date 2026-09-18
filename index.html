@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Калькуляшка Про — себестоимость, закуп и отгрузки</title>
+<meta name="description" content="Калькуляшка Про — приложение для расчёта себестоимости блюд, планирования закупок и учёта отгрузок. Работает офлайн." />
+<style>
+  :root{
+    --bg:#12100e; --panel:#1b1815; --panel2:#242019; --line:#3a332a;
+    --txt:#f2ece0; --muted:#b6a992; --accent:#e0a33a; --accent2:#5fd08a;
+    --danger:#e06565; --shadow:0 18px 50px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  header{position:sticky;top:0;z-index:10;background:rgba(18,16,14,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .hd{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px;letter-spacing:.3px}
+  .logo b{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(160deg,var(--accent),#b97817);color:#231a08;font-size:16px}
+  .hd nav{display:flex;gap:18px;font-size:14px;color:var(--muted)}
+  .hd nav a:hover{color:var(--txt)}
+  .btn{display:inline-block;padding:12px 20px;border-radius:12px;font-weight:800;border:1px solid transparent;cursor:pointer;transition:.15s;font-size:15px}
+  .btn.acc{background:linear-gradient(160deg,var(--accent),#c1831f);color:#231a08}
+  .btn.acc:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn.ghost{border-color:var(--line);color:var(--txt)}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  section{padding:66px 0;border-bottom:1px solid var(--line)}
+  .hero{padding:78px 0 66px;background:
+    radial-gradient(900px 340px at 20% -10%, rgba(224,163,58,.16), transparent 60%),
+    radial-gradient(700px 300px at 100% 10%, rgba(95,208,138,.10), transparent 60%);}
+  .hero h1{font-size:clamp(30px,5vw,52px);line-height:1.1;margin:0 0 14px;font-weight:900}
+  .hero p{font-size:clamp(16px,2vw,19px);color:var(--muted);max-width:640px;margin:0 0 26px}
+  .hero .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .badge{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:12.5px;color:var(--muted);margin-bottom:18px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+  .card h3{margin:8px 0 6px;font-size:17px}
+  .card p{margin:0;color:var(--muted);font-size:14px}
+  .ic{font-size:26px}
+  h2.sec{font-size:clamp(23px,3vw,32px);margin:0 0 8px;font-weight:900}
+  .sub{color:var(--muted);margin:0 0 28px;max-width:720px}
+  /* Табло сезона */
+  .season{background:linear-gradient(180deg,rgba(224,163,58,.07),transparent)}
+  .board{display:grid;gap:10px}
+  .slot{display:flex;align-items:center;gap:14px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+  .slot .place{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:900;background:linear-gradient(160deg,var(--accent),#b97817);color:#231a08;flex:none}
+  .slot.win .place{background:linear-gradient(160deg,var(--accent2),#2f9d63);color:#08210f}
+  .slot .who{font-weight:800}
+  .slot .when{color:var(--muted);font-size:12.5px}
+  .slot .free{margin-left:auto;color:var(--muted);font-size:13px;font-weight:700}
+  .slot.win .free{color:var(--accent2)}
+  .board-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .board-head .count{font-weight:900;color:var(--accent2)}
+  .prize{display:flex;gap:10px;align-items:center;font-size:14px;color:var(--muted);margin:4px 0}
+  .prize b{color:var(--txt)}
+  /* Тарифы */
+  .price{display:flex;flex-direction:column;gap:6px;position:relative}
+  .price .amt{font-size:30px;font-weight:900}
+  .price .amt small{font-size:14px;color:var(--muted);font-weight:600}
+  .price ul{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+  .price li{margin:3px 0}
+  .price .tag{position:absolute;right:16px;top:16px;font-size:11px;font-weight:900;padding:4px 9px;border-radius:999px;background:var(--accent2);color:#08210f}
+  .popular{border-color:var(--accent)}
+  ol.steps{margin:0;padding-left:20px;color:var(--muted)}
+  ol.steps li{margin:8px 0}
+  ol.steps b{color:var(--txt)}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:8px 0}
+  details summary{cursor:pointer;font-weight:800}
+  details p{color:var(--muted);margin:8px 0 0;font-size:14px}
+  footer{padding:34px 0;color:var(--muted);font-size:13px}
+  .foot{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center}
+  .contact{display:flex;gap:10px;flex-wrap:wrap}
+  .contact a{padding:8px 14px;border:1px solid var(--line);border-radius:10px;font-weight:700}
+  .contact a:hover{border-color:var(--accent);color:var(--accent)}
+  .note{font-size:12.5px;color:var(--muted);margin-top:10px}
+  /* Скриншоты */
+  .shots{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .shot{display:block;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow);transition:.15s}
+  .shot:hover{transform:translateY(-2px);border-color:var(--accent)}
+  .shot img{display:block;width:100%;height:auto}
+  @media (max-width:560px){ .hd nav{display:none} section{padding:46px 0} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <div class="logo"><b>К</b> Калькуляшка Про</div>
+    <nav>
+      <a href="#features">Возможности</a>
+      <a href="#season">Сезон 1</a>
+      <a href="#prices">Тарифы</a>
+      <a href="#how">Как купить</a>
+      <a href="#shots">Скриншоты</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="badge">Работает офлайн · данные остаются у вас · Windows</div>
+    <h1>Себестоимость, закуп и отгрузки — в одном приложении</h1>
+    <p>Считайте рецепты и себестоимость, формируйте закуп по прогнозу отгрузок и ведите учёт магазинов. Без интернета, без облака — все данные хранятся на вашем компьютере.</p>
+    <div class="cta">
+      <a class="btn acc" href="#prices">Посмотреть тарифы</a>
+      <a class="btn ghost" href="#how">Как получить</a>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <h2 class="sec">Что умеет</h2>
+    <p class="sub">Один инструмент вместо таблиц: от рецепта до накладной.</p>
+    <div class="grid g2">
+      <div class="card"><div class="ic">🧮</div><h3>Рецепты и себестоимость</h3><p>Состав на единицу товара, цена продажи, маржа и наценка считаются автоматически. Справочник сырья с ценами.</p></div>
+      <div class="card"><div class="ic">🛒</div><h3>Умный закуп</h3><p>Прогноз по истории отгрузок: средние продажи, возвраты, запас. Список закупа собирается одним нажатием.</p></div>
+      <div class="card"><div class="ic">🚚</div><h3>Отгрузки и план/факт</h3><p>Магазины, расписание по дням недели, факт и возвраты. Печать накладных и сводные по дням.</p></div>
+      <div class="card"><div class="ic">💾</div><h3>Данные у вас</h3><p>Всё хранится в файле на устройстве. Бэкапы, перенос между компьютерами, никакой передачи на сервер.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="season" class="season">
+  <div class="wrap">
+    <h2 class="sec">Сезон 1 — «Секреты подвала»</h2>
+    <p class="sub">В приложении спрятан квест: 15 пасхалок и один редкий секрет. Соберите все, получите финиш-код и отправьте его. Первые пять участников получают призы.</p>
+    <div class="board-head">
+      <div style="font-weight:800">Табло победителей</div>
+      <!-- МЕСТА: меняйте текст .who и .when + добавляйте/убирайте класс win -->
+      <div class="count" id="placesCount">занято 0 / 5</div>
+    </div>
+    <div class="board" id="board">
+      <div class="slot"><div class="place">1</div><div><div class="who">свободно</div><div class="when">—</div></div><div class="free">ждёт героя</div></div>
+      <div class="slot"><div class="place">2</div><div><div class="who">свободно</div><div class="when">—</div></div><div class="free">ждёт героя</div></div>
+      <div class="slot"><div class="place">3</div><div><div class="who">свободно</div><div class="when">—</div></div><div class="free">ждёт героя</div></div>
+      <div class="slot"><div class="place">4</div><div><div class="who">свободно</div><div class="when">—</div></div><div class="free">ждёт героя</div></div>
+      <div class="slot"><div class="place">5</div><div><div class="who">свободно</div><div class="when">—</div></div><div class="free">ждёт героя</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:22px">
+      <div>
+        <div class="prize"><b>1 место</b> — лицензия «навсегда» бесплатно (25 000 ₽)</div>
+        <div class="prize"><b>2 место</b> — скидка 80%</div>
+        <div class="prize"><b>3 место</b> — скидка 60%</div>
+        <div class="prize"><b>4 место</b> — скидка 40%</div>
+        <div class="prize"><b>5 место</b> — скидка 20%</div>
+      </div>
+      <div class="note">
+        Место определяется по времени отправки финиш-кода. Для 1-го места может понадобиться видео-подтверждение, для 2–5 — код и снимок экрана. Накрутка, смена даты и передача кода третьим лицам — отказ в призе. После закрытия 5 мест сезон завершается.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="shots">
+  <div class="wrap">
+    <h2 class="sec">Скриншоты</h2>
+    <p class="sub">Как выглядит приложение: расчёты, закуп, отгрузки и учёт — всё в одном окне.</p>
+    <div class="shots">
+      <a class="shot" href="1.jpg" target="_blank" rel="noopener"><img src="1.jpg" alt="Калькуляшка Про — экран 1" loading="lazy"></a>
+      <a class="shot" href="2.jpg" target="_blank" rel="noopener"><img src="2.jpg" alt="Калькуляшка Про — экран 2" loading="lazy"></a>
+      <a class="shot" href="3.jpg" target="_blank" rel="noopener"><img src="3.jpg" alt="Калькуляшка Про — экран 3" loading="lazy"></a>
+      <a class="shot" href="4.jpg" target="_blank" rel="noopener"><img src="4.jpg" alt="Калькуляшка Про — экран 4" loading="lazy"></a>
+      <a class="shot" href="5.jpg" target="_blank" rel="noopener"><img src="5.jpg" alt="Калькуляшка Про — экран 5" loading="lazy"></a>
+      <a class="shot" href="6.jpg" target="_blank" rel="noopener"><img src="6.jpg" alt="Калькуляшка Про — экран 6" loading="lazy"></a>
+      <a class="shot" href="7.jpg" target="_blank" rel="noopener"><img src="7.jpg" alt="Калькуляшка Про — экран 7" loading="lazy"></a>
+    </div>
+  </div>
+</section>
+
+<section id="prices">
+  <div class="wrap">
+    <h2 class="sec">Тарифы</h2>
+    <p class="sub">Пробный период 14 дней — бесплатно. Код активации выдаётся после оплаты.</p>
+    <div class="grid g3">
+      <div class="card price">
+        <div class="who" style="color:var(--muted);font-weight:800">Месяц</div>
+        <div class="amt">1 500 <small>₽ / мес</small></div>
+        <ul><li>Полный доступ</li><li>Обновления</li><li>Отмена в любой момент</li></ul>
+      </div>
+      <div class="card price popular">
+        <span class="tag">Выгодно</span>
+        <div class="who" style="color:var(--muted);font-weight:800">Год</div>
+        <div class="amt">12 000 <small>₽ / год</small></div>
+        <ul><li>Вместо 18 000 ₽</li><li>Скидка 6 месяцев</li><li>Полный доступ</li></ul>
+      </div>
+      <div class="card price">
+        <div class="who" style="color:var(--muted);font-weight:800">Навсегда</div>
+        <div class="amt">25 000 <small>₽</small></div>
+        <ul><li>Бессрочная лицензия</li><li>Один платёж</li><li>Все обновления</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2 class="sec">Как получить</h2>
+    <p class="sub">Покупка и продление — вручную у автора: заказ по контакту, всё по-человечески.</p>
+    <ol class="steps">
+      <li><b>Напишите автору</b> — VK, WhatsApp, СМС или почта (кнопки внизу). Укажите тариф.</li>
+      <li><b>Оплатите</b> — реквизиты пришлём в ответ.</li>
+      <li><b>Получите код активации</b> — он привязан к вашему компьютеру. Вводите в приложении и работаете.</li>
+    </ol>
+    <p class="note">Пробный период 14 дней доступен сразу после установки, без оплаты. Продление подписки — тем же контактам.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="sec">Вопросы</h2>
+    <details><summary>Нужен ли интернет?</summary><p>Нет. Приложение работает офлайн, данные хранятся на вашем компьютере.</p></details>
+    <details><summary>Что при смене компьютера?</summary><p>Напишите нам — перевыдадим код после подтверждения, что лицензия не передаётся третьим лицам.</p></details>
+    <details><summary>Мои данные где-то в облаке?</summary><p>Нет. Всё в файле на устройстве. Делайте бэкапы — в приложении есть для этого кнопка.</p></details>
+    <details><summary>Как получить приз в Сезоне 1?</summary><p>Соберите все секреты, скопируйте финиш-код из настроек и отправьте его. Первые пять — с призами.</p></details>
+  </div>
+</section>
+
+<section id="contacts">
+  <div class="wrap">
+    <h2 class="sec">Контакты</h2>
+    <p class="sub">Покупка, продление и поддержка — пишите в удобный канал. Укажите тариф, и мы всё оформим.</p>
+    <div class="contact" style="font-size:15px">
+      <a href="https://vk.ru/club241593404" target="_blank" rel="noopener">VK-группа</a>
+      <a href="https://wa.me/79211013154" target="_blank" rel="noopener">WhatsApp +7 921 101-31-54</a>
+      <a href="sms:+79211013154">СМС +7 921 101-31-54</a>
+      <a href="mailto:kalkulyashkaPro@yandex.ru">kalkulyashkaPro@yandex.ru</a>
+    </div>
+    <p class="note">VK-группа: vk.ru/club241593404 — новости и обновления. Пробный период 14 дней доступен сразу после установки, без оплаты.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>© Калькуляшка Про</div>
+    <div class="contact">
+      <a href="https://vk.ru/club241593404" target="_blank" rel="noopener">VK</a>
+      <a href="https://wa.me/79211013154" target="_blank" rel="noopener">WhatsApp +7 921 101-31-54</a>
+      <a href="sms:+79211013154">СМС +7 921 101-31-54</a>
+      <a href="mailto:kalkulyashkaPro@yandex.ru">kalkulyashkaPro@yandex.ru</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // автосчёт занятых мест по классу .win (для владельца: добавьте класс win слоту и впишите имя)
+  (function(){
+    var slots = document.querySelectorAll('#board .slot');
+    var n = 0;
+    slots.forEach(function(s){ if(s.classList.contains('win')) n++; });
+    var c = document.getElementById('placesCount');
+    if(c) c.textContent = 'занято ' + n + ' / ' + slots.length;
+  })();
+</script>
+</body>
+</html>
